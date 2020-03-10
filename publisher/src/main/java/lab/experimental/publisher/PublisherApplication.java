@@ -1,9 +1,13 @@
 package lab.experimental.publisher;
 
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,48 +16,38 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class PublisherApplication implements CommandLineRunner {
 
+	private static StringBuilder event = new StringBuilder();
+	public static final String NEWLINE = System.lineSeparator();
+
 	public static void main(String[] args) {
 		SpringApplication.run(PublisherApplication.class, args);
 		log.info("Publisher is up and running ...");
 	}
 
-	private static Queue<String> broker = new LinkedList<>();
-	private static StringBuilder event = new StringBuilder();
-	public static final String NEWLINE = System.lineSeparator();
-
 	@Override
 	public void run(String... args) throws InterruptedException {
-		log.info("EXECUTING : command line runner");
+		Scanner session = new Scanner(System.in);
+		boolean exit = false;
 
-		Thread pub = new Thread(this::publish);
-		pub.setName("PUBLISHER");
-
-		pub.start();
+		while (!exit) {
+			final String message = session.nextLine();
+			if (message.equals("exit")) {
+				exit = true;
+			}
+			publish(message);
+			event.append("PUBLISH -> ").append(message).append(NEWLINE);
+		}
+		log.info(event.toString());
 	}
 
-	private void publish() {
-		Scanner session = new Scanner(System.in);
-		while (true) {
-			String message = session.nextLine();
+	private void publish(final String message) {
+		MongoClient client = new MongoClient();
+		MongoDatabase db = client.getDatabase("broker");
 
-			if (message.equals("stop")) {
-				broker.add(message);
-				log.info(event.toString());
-				break;
-			}
+		MongoCollection<Document> collection = db.getCollection("queue");
+		Document doc = new Document().append(String.valueOf(System.currentTimeMillis()), message);
+		collection.insertOne(doc);
 
-			event.append(Thread.currentThread().getName())
-					.append(" | Published -> ")
-					.append(message)
-					.append(NEWLINE);
-
-			broker.add(message);
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				log.error(e.getMessage());
-				Thread.currentThread().interrupt();
-			}
-		}
+		client.close();
 	}
 }
