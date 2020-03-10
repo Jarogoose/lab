@@ -14,9 +14,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class PublisherApplication implements CommandLineRunner {
 
-	public static final String NEWLINE = System.lineSeparator();
-	private static StringBuilder event = new StringBuilder();
-
 	public static void main(String[] args) {
 		SpringApplication.run(PublisherApplication.class, args);
 		log.info("Publisher is up and running ...");
@@ -33,9 +30,8 @@ public class PublisherApplication implements CommandLineRunner {
 				exit = true;
 			}
 			publish(message);
-			event.append("PUBLISH -> ").append(message).append(NEWLINE);
+			log.info(String.format("Message %s was published", message));
 		}
-		log.info(event.toString());
 	}
 
 	private void publish(final String message) {
