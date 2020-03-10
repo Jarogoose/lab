@@ -3,8 +3,6 @@ package lab.experimental.publisher;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Scanner;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -16,8 +14,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class PublisherApplication implements CommandLineRunner {
 
-	private static StringBuilder event = new StringBuilder();
 	public static final String NEWLINE = System.lineSeparator();
+	private static StringBuilder event = new StringBuilder();
 
 	public static void main(String[] args) {
 		SpringApplication.run(PublisherApplication.class, args);
@@ -45,7 +43,7 @@ public class PublisherApplication implements CommandLineRunner {
 		MongoDatabase db = client.getDatabase("broker");
 
 		MongoCollection<Document> collection = db.getCollection("queue");
-		Document doc = new Document().append(String.valueOf(System.currentTimeMillis()), message);
+		Document doc = new Document("time", System.currentTimeMillis()).append("message", message);
 		collection.insertOne(doc);
 
 		client.close();
